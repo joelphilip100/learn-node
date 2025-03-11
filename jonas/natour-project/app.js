@@ -3,6 +3,7 @@ import cors from "cors";
 import fs from "fs";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import morgan from "morgan";
 
 // Get directory name
 // const __dirname = path.resolve(); dont use this way in ESM as path.resolve() does not always match __dirname. path.resolve() gives the CWD, not the script’s location
@@ -13,8 +14,15 @@ const __dirname = dirname(__filename);
 const app = express();
 
 // Middleware
+app.use(morgan("dev"));
 app.use(express.json());
 app.use(cors());
+
+// Custom middleware
+app.use((req, res, next) => {
+  req.requestTime = new Date().toISOString();
+  next();
+});
 
 // Read tours data from file
 let tours = [];
@@ -27,6 +35,7 @@ try {
   console.log(err);
 }
 
+// Routes Handlers
 const createTour = async (req, res) => {
   const newId = tours[tours.length - 1].id + 1;
   const newTour = { id: newId, ...req.body };
@@ -71,6 +80,7 @@ const getTour = (req, res) => {
 const getAllTours = (req, res) => {
   res.status(200).json({
     status: "success",
+    createdTime: req.requestTime,
     results: tours.length,
     data: { tours },
   });
